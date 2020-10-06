@@ -1,17 +1,20 @@
-FROM alpine as build
+FROM 0x01be/theharvester:build as build
 
-RUN apk add --no-cache --virtual theharvester-docker-0x01 \
-    git \
-    build-base \
-    python3-dev \
-    py3-pip \
+FROM alpine
+
+COPY --from=build /opt/theharvester/ /opt/theharvester/
+
+RUN apk add --no-cache --virtual theharvester-runtime-dependencies \
+    python3 \
     py3-yaml \
     py3-aiohttp
 
-ENV THEHARVESTER_REVISION master
-RUN git clone --depth 1 --branch ${THEHARVESTER_REVISION} https://github.com/laramies/theHarvester.git /theharvester
+RUN adduser -D -u 1000 theharvester
 
-WORKDIR /theharvester
-RUN pip3 install --prefix=/opt/theharvester .
-RUN python3 setup.py install --prefix=/opt/theharvester
+USER theharvester
+
+ENV PATH ${PATH}:/opt/theharvester/bin/
+ENV PYTHONPATH /usr/lib/python3.8/site-packages/:/opt/theharvester/lib/python3.8/site-packages/
+
+CMD "theHarvester"
 
